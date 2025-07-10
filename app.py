@@ -37,7 +37,7 @@ llm = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
     temperature=0.4,
     max_output_tokens=500,
-    google_api_key=GEMINI_API_KEY  # or set via environment variable
+    google_api_key=GEMINI_API_KEY
 )
 
 prompt = ChatPromptTemplate.from_messages(
