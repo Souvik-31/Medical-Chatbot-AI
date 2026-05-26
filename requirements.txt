@@ -10,4 +10,3 @@ langchain_experimental
 langchain-google-genai
 langchain-classic
 gunicorn
--e .
