@@ -124,8 +124,8 @@ def chat():
     
     # 1. Check if the query is medical-related
     if not is_medical_query(msg, llm):
-        print("Query is not medical-related. Returning 'I don't know.'")
-        return "I don't know."
+        print("Query is not medical-related. Returning formal out-of-scope response.")
+        return "I apologize, but I am programmed to assist only with medical and health-related inquiries. Please feel free to ask questions regarding symptoms, wellness, treatments, or other healthcare topics."
         
     # 2. Query the RAG chain (from PDF context)
     response = rag_chain.invoke({"input": msg})

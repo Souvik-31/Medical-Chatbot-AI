@@ -15,7 +15,7 @@ MediBot AI is an advanced, production-ready AI Medical Chatbot designed to answe
 
 ## 🚀 Key Features
 
-*   **🧠 Intelligent Medical Classifier**: Evaluates incoming queries using the LLM to identify non-medical/irrelevant topics, responding instantly with *"I don't know"* to prevent hallucinations and abuse.
+*   **🧠 Intelligent Medical Classifier**: Evaluates incoming queries using the LLM to identify non-medical/irrelevant topics, responding instantly with a formal out-of-scope notice to prevent hallucinations and abuse.
 *   **📚 Custom PDF Context RAG**: Indexes and retrieves information from local medical literature/PDFs via **Pinecone Vector Database** and **HuggingFace Embeddings**.
 *   **🔗 Hybrid Routing Fallback**: If the requested answer is not found in the custom PDF context, the query is automatically routed in real-time to **Sarvam AI's Chat Completion API** (`sarvam-30b`/`sarvam-105b`).
 *   **🌐 Indic-Language Optimized**: Leveraging Sarvam AI's models allows the chatbot to support and answer complex medical queries in **English and 10 Indic languages** (Hindi, Tamil, Telugu, etc.) with high efficiency.
@@ -30,7 +30,7 @@ Here is the underlying decision-making pipeline for every user query:
 ```mermaid
 graph TD
     A([User Query]) --> B{Is Medical Related?}
-    B -- No --> C[Return 'I don't know.']
+    B -- No --> C[Return formal out-of-scope response]
     B -- Yes --> D[Query Vector Database RAG]
     D --> E{Answer Found in PDF?}
     E -- Yes --> F[Return RAG PDF Answer]
