@@ -1,88 +1,279 @@
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-	<title>Chatbot</title>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-		integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
-		integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css')}}" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediBot AI - Intelligent Medical RAG Chatbot</title>
+    
+    <!-- Bootstrap 4.6 & FontAwesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts (Outfit & Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}" />
 </head>
-
-
 <body>
-	<div class="container-fluid h-100">
-		<div class="row justify-content-center h-100">
-			<div class="col-md-8 col-xl-6 chat">
-				<div class="card">
-					<div class="card-header msg_head">
-						<div class="d-flex bd-highlight">
-							<div class="img_cont">
-								<img src="https://cdn-icons-png.flaticon.com/512/387/387569.png"
-									class="rounded-circle user_img">
-								<!-- <img src="https://www.prdistribution.com/spirit/uploads/pressreleases/2019/newsreleases/d83341deb75c4c4f6b113f27b1e42cd8-chatbot-florence-already-helps-thousands-of-patients-to-remember-their-medication.png" class="rounded-circle user_img"> -->
-								<span class="online_icon"></span>
-							</div>
-							<div class="user_info">
-								<span>MediBot</span>
-								<p>Ask me anything!</p>
-							</div>
-						</div>
-					</div>
-					<div id="messageFormeight" class="card-body msg_card_body">
+    <div class="container-fluid h-100 py-3">
+        <div class="row justify-content-center h-100 align-items-center">
+            <div class="col-md-10 col-lg-8 col-xl-6 chat-container">
+                <div class="card glass-card">
+                    <!-- Card Header -->
+                    <div class="card-header msg_head">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="img_cont">
+                                    <div class="bot-avatar-circle">
+                                        <i class="fa-solid fa-file-waveform animate-pulse"></i>
+                                    </div>
+                                    <span class="online_icon"></span>
+                                </div>
+                                <div class="user_info">
+                                    <span>MediBot AI</span>
+                                    <p class="status-text">Active • Hybrid RAG Engine</p>
+                                </div>
+                            </div>
+                            <div class="header-actions">
+                                <button class="action-btn" id="clearChat" title="Clear Conversation">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div id="messageFormeight" class="card-body msg_card_body">
+                        <!-- Welcome Landing Screen (Visible when chat is empty) -->
+                        <div id="welcome-screen" class="welcome-container text-center py-4">
+                            <div class="welcome-logo-container mb-3">
+                                <div class="pulse-ring"></div>
+                                <div class="welcome-logo">
+                                    <i class="fa-solid fa-house-medical"></i>
+                                </div>
+                            </div>
+                            <h3 class="welcome-title font-weight-bold">Welcome to MediBot AI</h3>
+                            <p class="welcome-subtitle text-muted px-4">
+                                I am an intelligent medical chatbot utilizing Retrieval-Augmented Generation (RAG) over trusted clinical literature, powered by Gemini and Sarvam AI.
+                            </p>
+                            
+                            <div class="disclaimer-box my-4 mx-3 p-3">
+                                <i class="fa-solid fa-triangle-exclamation mr-2 text-warning"></i>
+                                <strong>Disclaimer:</strong> This bot is for informational purposes only. Do not use for medical emergencies or as a replacement for professional diagnosis/treatment.
+                            </div>
+                            
+                            <h5 class="suggest-title mb-3">Ask me a question to get started:</h5>
+                            <div class="row px-2" id="suggestion-grid">
+                                <div class="col-sm-6 p-2">
+                                    <div class="suggestion-card" data-prompt="What are the symptoms of Type 2 diabetes?">
+                                        <h6><i class="fa-solid fa-stethoscope mr-2 text-info"></i> Diabetes symptoms</h6>
+                                        <p>Learn typical signs of type 2 diabetes.</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 p-2">
+                                    <div class="suggestion-card" data-prompt="How can someone manage high blood pressure through diet?">
+                                        <h6><i class="fa-solid fa-heart-pulse mr-2 text-danger"></i> Managing hypertension</h6>
+                                        <p>Dietary approaches to lowering blood pressure.</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 p-2">
+                                    <div class="suggestion-card" data-prompt="What is the recommended treatment for a minor first-degree burn?">
+                                        <h6><i class="fa-solid fa-kit-medical mr-2 text-success"></i> First aid for burns</h6>
+                                        <p>Immediate steps to treat minor heat burns.</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 p-2">
+                                    <div class="suggestion-card" data-prompt="What are the common symptoms of influenza (flu)?">
+                                        <h6><i class="fa-solid fa-virus mr-2 text-warning"></i> Influenza symptoms</h6>
+                                        <p>Recognize signs of seasonal flu infection.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Footer -->
+                    <div class="card-footer">
+                        <form id="messageArea" class="input-group">
+                            <input type="text" id="text" name="msg" placeholder="Type a medical or health query..."
+                                autocomplete="off" class="form-control type_msg" required />
+                            <div class="input-group-append">
+                                <button type="submit" id="send" class="input-group-text send_btn" title="Send Message">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- jQuery, Popper, Bootstrap, Marked.js for markdown parsing -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-					</div>
-					<div class="card-footer">
-						<form id="messageArea" class="input-group">
-							<input type="text" id="text" name="msg" placeholder="Type your message..."
-								autocomplete="off" class="form-control type_msg" required />
-							<div class="input-group-append">
-								<button type="submit" id="send" class="input-group-text send_btn"><i
-										class="fas fa-location-arrow"></i></button>
-							</div>
-						</form>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+    <script>
+        $(document).ready(function () {
+            // Configure marked options
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
 
-	<script>
-		$(document).ready(function () {
-			$("#messageArea").on("submit", function (event) {
-				const date = new Date();
-				const hour = String(date.getHours()).padStart(2, '0');
-				const minute = String(date.getMinutes()).padStart(2, '0');
-				const str_time = hour + ":" + minute;
-				var rawText = $("#text").val();
+            const chatBody = $("#messageFormeight");
+            const welcomeScreen = $("#welcome-screen");
 
-				var userHtml = '<div class="d-flex justify-content-end mb-4"><div class="msg_cotainer_send">' + rawText + '<span class="msg_time_send">' + str_time + '</span></div><div class="img_cont_msg"><img src="https://i.ibb.co/d5b84Xw/Untitled-design.png" class="rounded-circle user_img_msg"></div></div>';
+            function scrollToBottom() {
+                chatBody.animate({ scrollTop: chatBody[0].scrollHeight }, 300);
+            }
 
-				$("#text").val("");
-				$("#messageFormeight").append(userHtml);
+            function getFormattedTime() {
+                const date = new Date();
+                const hour = String(date.getHours()).padStart(2, '0');
+                const minute = String(date.getMinutes()).padStart(2, '0');
+                return hour + ":" + minute;
+            }
 
-				$.ajax({
-					data: {
-						msg: rawText,
-					},
-					type: "POST",
-					url: "/get",
-				}).done(function (data) {
-					var botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://cdn-icons-png.flaticon.com/512/387/387569.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' + data + '<span class="msg_time">' + str_time + '</span></div></div>';
-					$("#messageFormeight").append($.parseHTML(botHtml));
-				});
-				event.preventDefault();
-			});
-		});
-	</script>
+            function submitQuery(queryText) {
+                if (!queryText.trim()) return;
 
+                // Hide welcome screen on first query
+                if (welcomeScreen.is(":visible")) {
+                    welcomeScreen.hide();
+                }
+
+                const str_time = getFormattedTime();
+
+                // Append User Message
+                const userHtml = `
+                    <div class="d-flex justify-content-end mb-4 animate-fade-in">
+                        <div class="msg_cotainer_send shadow-sm">
+                            <div class="msg-text">${escapeHtml(queryText)}</div>
+                            <span class="msg_time_send">${str_time}</span>
+                        </div>
+                        <div class="img_cont_msg ml-2">
+                            <div class="user-avatar-circle">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatBody.append(userHtml);
+                scrollToBottom();
+
+                // Clear input field
+                $("#text").val("");
+
+                // Append Typing Indicator
+                const typingId = "typing-" + Date.now();
+                const typingHtml = `
+                    <div id="${typingId}" class="d-flex justify-content-start mb-4 animate-fade-in">
+                        <div class="img_cont_msg mr-2">
+                            <div class="bot-avatar-circle mini">
+                                <i class="fa-solid fa-file-waveform"></i>
+                            </div>
+                        </div>
+                        <div class="msg_cotainer shadow-sm d-flex align-items-center py-2 px-3">
+                            <div class="typing-indicator-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatBody.append(typingHtml);
+                scrollToBottom();
+
+                // AJAX request to backend
+                $.ajax({
+                    data: { msg: queryText },
+                    type: "POST",
+                    url: "/get",
+                }).done(function (data) {
+                    // Remove Typing Indicator
+                    $(`#${typingId}`).remove();
+
+                    // Parse Markdown Response
+                    const formattedAnswer = marked.parse(data);
+
+                    // Append Bot Message
+                    const botHtml = `
+                        <div class="d-flex justify-content-start mb-4 animate-fade-in">
+                            <div class="img_cont_msg mr-2">
+                                <div class="bot-avatar-circle mini">
+                                    <i class="fa-solid fa-file-waveform"></i>
+                                </div>
+                            </div>
+                            <div class="msg_cotainer shadow-sm">
+                                <div class="msg-text">${formattedAnswer}</div>
+                                <span class="msg_time">${str_time}</span>
+                            </div>
+                        </div>
+                    `;
+                    chatBody.append(botHtml);
+                    scrollToBottom();
+                }).fail(function (xhr, status, error) {
+                    // Remove Typing Indicator
+                    $(`#${typingId}`).remove();
+
+                    // Append Error Message
+                    const errorHtml = `
+                        <div class="d-flex justify-content-start mb-4 animate-fade-in">
+                            <div class="img_cont_msg mr-2">
+                                <div class="bot-avatar-circle mini error">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                </div>
+                            </div>
+                            <div class="msg_cotainer shadow-sm error-bubble">
+                                <div class="msg-text">
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Sorry, I couldn't reach the server. Please verify your connection or try again later.
+                                </div>
+                                <span class="msg_time">${str_time}</span>
+                            </div>
+                        </div>
+                    `;
+                    chatBody.append(errorHtml);
+                    scrollToBottom();
+                });
+            }
+
+            // HTML Escaping helper
+            function escapeHtml(text) {
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            // Form Submit Listener
+            $("#messageArea").on("submit", function (event) {
+                event.preventDefault();
+                const rawText = $("#text").val();
+                submitQuery(rawText);
+            });
+
+            // Suggestion Card click listener
+            $(document).on("click", ".suggestion-card", function () {
+                const prompt = $(this).attr("data-prompt");
+                submitQuery(prompt);
+            });
+
+            // Clear Chat Action
+            $("#clearChat").on("click", function () {
+                if (confirm("Are you sure you want to clear the conversation?")) {
+                    chatBody.find("div.d-flex").remove();
+                    welcomeScreen.fadeIn(300);
+                }
+            });
+        });
+    </script>
 </body>
-
 </html>
