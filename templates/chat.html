@@ -269,8 +269,10 @@
             // Clear Chat Action
             $("#clearChat").on("click", function () {
                 if (confirm("Are you sure you want to clear the conversation?")) {
-                    chatBody.find("div.d-flex").remove();
-                    welcomeScreen.fadeIn(300);
+                    $.post("/clear", function() {
+                        chatBody.find("div.d-flex").remove();
+                        welcomeScreen.fadeIn(300);
+                    });
                 }
             });
         });

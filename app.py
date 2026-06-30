@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session
 from src.helper import download_hugging_face_embeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -12,6 +12,7 @@ import os
 import requests
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "super-secret-key-for-medical-bot")
 
 load_dotenv()
 
@@ -51,6 +52,29 @@ prompt = ChatPromptTemplate.from_messages(
 
 question_answer_chain = create_stuff_documents_chain(llm, prompt)
 rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+
+
+# Helper to rephrase follow-up query into a standalone question based on session history
+def get_standalone_question(query, chat_history_str, llm):
+    if not chat_history_str.strip():
+        return query
+    
+    rephrase_prompt = (
+        "Given the following conversation history and a follow-up question, rephrase the follow-up question "
+        "to be a standalone question (in its original language) that can be understood without the conversation history. "
+        "Do not answer the question, just rephrase it and output ONLY the standalone question itself.\n\n"
+        f"Chat History:\n{chat_history_str}\n\n"
+        f"Follow-up Question: {query}\n"
+        "Standalone Question:"
+    )
+    try:
+        response = llm.invoke([HumanMessage(content=rephrase_prompt)])
+        standalone = response.content.strip()
+        print(f"Rephrased standalone query: '{standalone}' (Original: '{query}')")
+        return standalone
+    except Exception as e:
+        print(f"Error rephrasing query: {e}")
+        return query
 
 
 # Helper to classify queries as medical or not using the existing Gemini LLM
@@ -119,26 +143,47 @@ def index():
 @app.route("/get", methods=["GET", "POST"])
 def chat():
     msg = request.form["msg"]
-    input = msg
     print("User message:", msg)
     
-    # 1. Check if the query is medical-related
-    if not is_medical_query(msg, llm):
+    # Retrieve chat history from session
+    chat_history = session.get("chat_history", [])
+    
+    # Format chat history as a string
+    chat_history_str = ""
+    for turn in chat_history:
+        chat_history_str += f"User: {turn['user']}\nAssistant: {turn['bot']}\n"
+    
+    # 1. Get standalone question based on history
+    standalone_query = get_standalone_question(msg, chat_history_str, llm)
+    
+    # 2. Check if the standalone query is medical-related
+    if not is_medical_query(standalone_query, llm):
         print("Query is not medical-related. Returning formal out-of-scope response.")
         return "I apologize, but I am programmed to assist only with medical and health-related inquiries. Please feel free to ask questions regarding symptoms, wellness, treatments, or other healthcare topics."
         
-    # 2. Query the RAG chain (from PDF context)
-    response = rag_chain.invoke({"input": msg})
+    # 3. Query the RAG chain (from PDF context) using the standalone query
+    response = rag_chain.invoke({"input": standalone_query})
     answer = response["answer"].strip()
     print("RAG answer:", answer)
     
-    # 3. If the answer was not found in the PDF context, fallback to Sarvam AI
+    # 4. If the answer was not found in the PDF context, fallback to Sarvam AI
     if "NOT_FOUND_IN_PDF" in answer:
         print("Answer not found in PDF. Routing to Sarvam AI...")
-        answer = ask_sarvam_ai(msg)
+        answer = ask_sarvam_ai(standalone_query)
         print("Sarvam AI answer:", answer)
         
+    # 5. Append current turn to chat history and update session
+    chat_history.append({"user": msg, "bot": answer})
+    session["chat_history"] = chat_history[-5:] # Keep last 5 turns
+    session.modified = True
+        
     return str(answer)
+
+
+@app.route("/clear", methods=["POST"])
+def clear_chat():
+    session.pop("chat_history", None)
+    return jsonify({"status": "success"})
 
 
 
